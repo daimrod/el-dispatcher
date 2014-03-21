@@ -1,4 +1,4 @@
-;;; dispatcher.el --- -*- lexical-binding: t; -*-
+;;; el-dispatcher.el --- -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2014 Grégoire Jadi
 
@@ -23,7 +23,7 @@
 
 (eval-when-compile (require 'cl))
 
-(defun dispatcher-make (function handlers)
+(defun el-dispatcher-make (function handlers)
   "Transform FUNCTION into a dispatcher using HANDLERS.
 
 A dispatcher is a function that has different behavior depending
@@ -35,7 +35,7 @@ For example given the following function:
    (list url))
 
 You can transform it into a dispatcher with different handlers:
-\(dispatcher-make 'my-browse-url '((w3m w3m-browse-url)
+\(el-dispatcher-make 'my-browse-url '((w3m w3m-browse-url)
                                    (firefox browse-url-firefox)))
 
 Then:
@@ -47,15 +47,15 @@ Then handler is called with the result of the initial function.
 \(apply 'handler (initial-function ARG))
 "
   ;; Remove the old dispatcher (if any)
-  (remove-function (symbol-function function) 'dispatcher)
+  (remove-function (symbol-function function) 'el-dispatcher)
   ;; Add the new dispatcher
   (add-function :filter-return (symbol-function function)
                 (lambda (args)
                   ;; this makes debugging easier
-                  (dispatcher--dispatch args current-prefix-arg handlers))
-                '((name . dispatcher))))
+                  (el-dispatcher--dispatch args current-prefix-arg handlers))
+                '((name . el-dispatcher))))
 
-(defun dispatcher--dispatch (args prefix handlers)
+(defun el-dispatcher--dispatch (args prefix handlers)
   (let ((handler (rest
                   (cond ((null prefix)
                          (first handlers))
@@ -74,6 +74,6 @@ Then handler is called with the result of the initial function.
        (symbol-value handler)) args)))
 
 
-(provide 'dispatcher)
+(provide 'el-dispatcher)
 
-;;; dispatcher.el ends here
+;;; el-dispatcher.el ends here
