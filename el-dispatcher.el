@@ -23,6 +23,10 @@
 
 (eval-when-compile (require 'cl))
 
+(defvar dispatcher-prefix-arg nil
+  "Hack to pass or simulate `current-prefix-arg' when the
+dispatcher isn't called directly.")
+
 (defun el-dispatcher-make (function handlers)
   "Transform FUNCTION into a dispatcher using HANDLERS.
 
@@ -52,11 +56,11 @@ Then handler is called with the result of the initial function.
   (add-function :filter-return (symbol-function function)
                 (lambda (args)
                   ;; this makes debugging easier
-                  (el-dispatcher--dispatch args current-prefix-arg handlers))
+                  (el-dispatcher--dispatch args (or current-prefix-arg dispatcher-prefix-arg) handlers))
                 '((name . el-dispatcher))))
 
 (defun el-dispatcher--dispatch (args prefix handlers)
-  (let ((handler (rest
+  (let ((handler (cdr-safe
                   (cond ((null prefix)
                          (first handlers))
                         ((integerp prefix)
@@ -67,11 +71,13 @@ Then handler is called with the result of the initial function.
                                                  nil
                                                  t)
                                 handlers))))))
-    (apply
-     ;; `handler' can be a variable or a function
-     (if (functionp handler)
-         handler
-       (symbol-value handler)) args)))
+    (if handler
+        (apply
+         ;; `handler' can be a variable or a function
+         (if (functionp handler)
+             handler
+           (symbol-value handler)) args)
+      (user-error "No handler `%S' found for `%S'" handler args))))
 
 
 (provide 'el-dispatcher)
