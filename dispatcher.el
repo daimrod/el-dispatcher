@@ -35,8 +35,8 @@ For example given the following function:
    (list url))
 
 You can transform it into a dispatcher with different handlers:
-\(dispatcher-make 'my-browse-url '((w3m . w3m-browse-url)
-                                   (firefox . browse-url-firefox)))
+\(dispatcher-make 'my-browse-url '((w3m w3m-browse-url)
+                                   (firefox browse-url-firefox)))
 
 Then:
 M-x my-browse-url RET <url> RET -> call w3m-browse-url
@@ -51,19 +51,27 @@ Then handler is called with the result of the initial function.
   ;; Add the new dispatcher
   (add-function :filter-return (symbol-function function)
                 (lambda (args)
-                  (let* ((handler (rest
-                                   (cond ((null current-prefix-arg)
-                                          (first handlers))
-                                         ((integerp current-prefix-arg)
-                                          (nth current-prefix-arg handlers))
-                                         (t
-                                          (assoc (completing-read "Choose: "
-                                                                  handlers
-                                                                  nil
-                                                                  t)
-                                                 handlers))))))
-                    (apply handler args)))
+                  ;; this makes debugging easier
+                  (dispatcher--dispatch args current-prefix-arg handlers))
                 '((name . dispatcher))))
+
+(defun dispatcher--dispatch (args prefix handlers)
+  (let ((handler (rest
+                  (cond ((null prefix)
+                         (first handlers))
+                        ((integerp prefix)
+                         (nth prefix handlers))
+                        (t
+                         (assoc (completing-read "Choose: "
+                                                 handlers
+                                                 nil
+                                                 t)
+                                handlers))))))
+    (apply
+     ;; `handler' can be a variable or a function
+     (if (functionp handler)
+         handler
+       (symbol-value handler)) args)))
 
 
 (provide 'dispatcher)
