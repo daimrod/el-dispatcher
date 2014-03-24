@@ -60,17 +60,20 @@ Then handler is called with the result of the initial function.
                 '((name . el-dispatcher))))
 
 (defun el-dispatcher--dispatch (args prefix handlers)
-  (let ((handler (cdr-safe
-                  (cond ((null prefix)
-                         (first handlers))
-                        ((integerp prefix)
-                         (nth prefix handlers))
-                        (t
-                         (assoc (completing-read "Choose: "
-                                                 handlers
-                                                 nil
-                                                 t)
-                                handlers))))))
+  (let* ((handlers (etypecase handlers
+                     (symbol (symbol-value handlers))
+                     (list handlers)))
+         (handler (cdr-safe
+                   (cond ((null prefix)
+                          (first handlers))
+                         ((integerp prefix)
+                          (nth prefix handlers))
+                         (t
+                          (assoc (completing-read "Choose: "
+                                                  handlers
+                                                  nil
+                                                  t)
+                                 handlers))))))
     (if handler
         (apply
          ;; `handler' can be a variable or a function
